@@ -15,13 +15,11 @@ func keyIsFunction(key string) bool {
 func Blend(source, dest map[string]interface{}) {
 
 	for key, value := range source {
-		if _, exists := dest[key]; !exists {
-			dest[key] = make([]interface{}, 0)
-		}
-
-		for itemKey, itemValue := range value.(map[string]interface{}) {
-			if keyIsFunction(itemKey) {
-				executeFunction(itemKey, key, itemValue, dest)
+		if _, isMSI := value.(map[string]interface{}); isMSI {
+			for itemKey, itemValue := range value.(map[string]interface{}) {
+				if keyIsFunction(itemKey) {
+					executeFunction(itemKey, key, itemValue, dest)
+				}
 			}
 		}
 	}
@@ -31,7 +29,11 @@ func Blend(source, dest map[string]interface{}) {
 func executeFunction(function, key string, value interface{}, dest map[string]interface{}) {
 	switch function {
 	case blendFunctionAdd:
+		if _, exists := dest[key]; !exists {
+			dest[key] = make([]interface{}, 0)
+		}
 		dest[key] = append(dest[key].([]interface{}), value)
 	default:
+
 	}
 }
