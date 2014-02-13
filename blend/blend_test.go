@@ -21,10 +21,17 @@ var tests = []struct {
 		expected:    `{"name":"Mat","age":31}`,
 	},
 	{
-		name:        "Deep blending",
+		name:        "Shallow blending (default)",
 		sources:     []string{`{"grandpa":{"parent":{"another":"Tyler"}}}`},
 		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
-		expected:    `{"grandpa":{"parent":{"child":"Mat","another":"Tyler"}}}`,
+		expected:    `{"grandpa":{"parent":{"another":"Tyler"}}}`,
+	},
+	// deep blending
+	{
+		name:        "Deep blending",
+		sources:     []string{`{"grandpa":{"<":{"parent":{"another":"Tyler"}}}}`, `{"grandpa":{"<":{"parent":{"athird":"Ryan"}}}}`},
+		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
+		expected:    `{"grandpa":{"parent":{"child":"Mat","another":"Tyler","athird":"Ryan"}}}`,
 	},
 	// + - adding to arrays
 	{
@@ -83,7 +90,7 @@ func TestAll(t *testing.T) {
 		current := destination
 		for _, sourceStr := range test.sources {
 			source := jsonToMSI(sourceStr)
-			current = Blend(source, current)
+			Blend(source, current)
 		}
 
 		assert.True(t, reflect.DeepEqual(current, expected), "%s failed - Actual: %#v is not equal to Expected: %#v", test.name, MSIToJson(current), MSIToJson(expected))
