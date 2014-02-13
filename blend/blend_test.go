@@ -13,6 +13,19 @@ var tests = []struct {
 	sources     []string
 	expected    string
 }{
+	// normal blending
+	{
+		name:        "Normal blending",
+		sources:     []string{`{"name":"Mat"}`},
+		destination: `{"age":31}`,
+		expected:    `{"name":"Mat","age":31}`,
+	},
+	{
+		name:        "Deep blending",
+		sources:     []string{`{"grandpa":{"parent":{"another":"Tyler"}}}`},
+		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
+		expected:    `{"grandpa":{"parent":{"child":"Mat","another":"Tyler"}}}`,
+	},
 	// + - adding to arrays
 	{
 		name:        "Create array",
@@ -42,6 +55,9 @@ var tests = []struct {
 }
 
 func jsonToMSI(jsonString string) (msi map[string]interface{}) {
+	if len(jsonString) == 0 {
+		jsonString = "{}"
+	}
 	err := json.Unmarshal([]byte(jsonString), &msi)
 	if err != nil {
 		panic(err)
