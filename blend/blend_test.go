@@ -2,6 +2,7 @@ package blend
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -32,6 +33,12 @@ var tests = []struct {
 		sources:     []string{`{"grandpa":{"<":{"parent":{"another":"Tyler"}}}}`, `{"grandpa":{"<":{"parent":{"athird":"Ryan"}}}}`},
 		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
 		expected:    `{"grandpa":{"parent":{"child":"Mat","another":"Tyler","athird":"Ryan"}}}`,
+	},
+	{
+		name:        "Double Deep blending",
+		sources:     []string{`{"grandpa":{"<":{"parent":{"child":{"another":"Tyler"}}}}}`, `{"grandpa":{"<":{"parent":{"child":{"athird":"Ryan"}}}}}`},
+		destination: `{"grandpa":{"parent":{"child":{"first":"Mat"}}}}`,
+		expected:    `{"grandpa":{"parent":{"child":{"first":"Mat","another":"Tyler","athird":"Ryan"}}}}`,
 	},
 	// + - adding to arrays
 	{
@@ -100,6 +107,7 @@ func TestAll(t *testing.T) {
 		expected := jsonToMSI(test.expected)
 
 		current := destination
+		fmt.Printf("Blending %s\n", test.name)
 		for _, sourceStr := range test.sources {
 			source := jsonToMSI(sourceStr)
 			Blend(source, current)
