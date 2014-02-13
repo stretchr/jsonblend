@@ -65,6 +65,12 @@ var tests = []struct {
 		destination: `{}`,
 		expected:    `{"name":["Mat","Tyler"]}`,
 	},
+	{
+		name:        "Add if not there to deep array",
+		sources:     []string{`{"grandpa":{"<":{"parent":{"child":{"names":{"+?":"Tyler"}}}}}}`, `{"grandpa":{"<":{"parent":{"child":{"names":{"+?":"Mat"}}}}}}`},
+		destination: `{"grandpa":{"parent":{"child":{"names":["Mat"]}}}}`,
+		expected:    `{"grandpa":{"parent":{"child":{"names":["Mat","Tyler"]}}}}`,
+	},
 }
 
 func jsonToMSI(jsonString string) (msi map[string]interface{}) {
