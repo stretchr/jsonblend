@@ -69,7 +69,13 @@ func BlendFuncMergeDirect(source, dest map[string]interface{}) {
 	}
 }
 func BlendFuncMergeShallow(source, dest map[string]interface{}) {
-
+	for key, _ := range dest {
+		if _, exists := source[key]; exists {
+			for sourceKey, sourceValue := range source[key].(map[string]interface{}) {
+				dest[key].(map[string]interface{})[sourceKey] = sourceValue
+			}
+		}
+	}
 }
 func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 
