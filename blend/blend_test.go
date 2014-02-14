@@ -85,6 +85,13 @@ var tests = []struct {
 		destination: `{"grandpa":{"parent":{"child":{"names":["Mat"]}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"names":["Mat","Tyler"]}}}}`,
 	},
+	// - remove from an array
+	{
+		name:        "Ensure an item isn't in an array",
+		sources:     []string{`{"+": {"name": {"item":"one"}}}`, `{"+": {"name": {"item":"two"}}}`, `{"+": {"name": {"item":"three"}}}`, `{"-": {"name": {"item":"two"}}}`},
+		destination: `{}`,
+		expected:    `{"name": [{"item":"one"},{"item":"three"}]}`,
+	},
 }
 
 func jsonToMSI(jsonString string) (msi map[string]interface{}) {

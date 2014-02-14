@@ -1,5 +1,9 @@
 package blend
 
+import (
+	"reflect"
+)
+
 const (
 	blendFunctionAdd             = "+"
 	blendFunctionAddIfNotPresent = "+?"
@@ -50,7 +54,7 @@ func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) {
 		}
 		found := false
 		for _, item := range dest[key].([]interface{}) {
-			if item == value {
+			if reflect.DeepEqual(item, value) {
 				found = true
 				break
 			}
@@ -61,7 +65,21 @@ func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) {
 	}
 }
 func BlendFuncRemove(source, dest map[string]interface{}) {
-
+	for key, value := range source {
+		if _, exists := dest[key]; !exists {
+			return
+		}
+		location := -1
+		for index, item := range dest[key].([]interface{}) {
+			if reflect.DeepEqual(item, value) {
+				location = index
+				break
+			}
+		}
+		if location != -1 {
+			dest[key] = append(dest[key].([]interface{})[:location], dest[key].([]interface{})[location+1:]...)
+		}
+	}
 }
 func BlendFuncMergeDirect(source, dest map[string]interface{}) {
 	for key, value := range source {
