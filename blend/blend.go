@@ -1,68 +1,76 @@
 package blend
 
 const (
-	blendFunctionAdd       = "+"
-	blendFunctionDeepMerge = "<"
-	blendFunctionSetDirect = ""
+	blendFunctionAdd             = "+"
+	blendFunctionAddIfNotPresent = "+?"
+	blendFunctionRemove          = "-"
+	blendFunctionMergeDirect     = "^"
+	blendFunctionMergeShallow    = "<"
+	blendFunctionMergeDeep       = "<<"
 )
 
-var functionMap = map[string]bool{
-	blendFunctionAdd:       true,
-	blendFunctionDeepMerge: true,
+type blendFunc func(source, dest map[string]interface{})
+
+var functionMap = map[string]blendFunc{
+	blendFunctionAdd:             BlendFuncAdd,
+	blendFunctionAddIfNotPresent: BlendFuncAddIfNotPresent,
+	blendFunctionRemove:          BlendFuncRemove,
+	blendFunctionMergeDirect:     BlendFuncMergeDirect,
+	blendFunctionMergeShallow:    BlendFuncMergeShallow,
+	blendFunctionMergeDeep:       BlendFuncMergeDeep,
 }
 
 func keyIsFunction(key string) bool {
-	return functionMap[key]
+	return functionMap[key] != nil
 }
 
+// Blend blends the source into the destination using the
+// blending functions present in the maps.
 func Blend(source, dest map[string]interface{}) {
 
 	for key, value := range source {
-
-		if _, isMSI := value.(map[string]interface{}); isMSI {
-			for itemKey, itemValue := range value.(map[string]interface{}) {
-				if keyIsFunction(itemKey) {
-					executeFunction(itemKey, key, itemValue, dest)
-				} else {
-					executeFunction(blendFunctionSetDirect, key, value, dest)
-				}
-			}
-		} else {
-			executeFunction(blendFunctionSetDirect, key, value, dest)
+		if keyIsFunction(key) {
+			functionMap[key](value.(map[string]interface{}), dest)
 		}
 	}
-
 }
 
-func executeFunction(function, key string, value interface{}, dest map[string]interface{}) {
-	switch function {
-	case blendFunctionAdd:
+func BlendFuncAdd(source, dest map[string]interface{}) {
+	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			dest[key] = make([]interface{}, 0)
 		}
 		dest[key] = append(dest[key].([]interface{}), value)
-	case blendFunctionDeepMerge:
-		deepMerge(dest[key].(map[string]interface{}), value.(map[string]interface{}))
-	case blendFunctionSetDirect:
+	}
+}
+func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) {
+	for key, value := range source {
+		if _, exists := dest[key]; !exists {
+			dest[key] = make([]interface{}, 0)
+		}
+		found := false
+		for _, item := range dest[key].([]interface{}) {
+			if item == value {
+				found = true
+				break
+			}
+		}
+		if !found {
+			dest[key] = append(dest[key].([]interface{}), value)
+		}
+	}
+}
+func BlendFuncRemove(source, dest map[string]interface{}) {
+
+}
+func BlendFuncMergeDirect(source, dest map[string]interface{}) {
+	for key, value := range source {
 		dest[key] = value
 	}
 }
+func BlendFuncMergeShallow(source, dest map[string]interface{}) {
 
-func deepMerge(current map[string]interface{}, value map[string]interface{}) {
-
-	// TODO: this needs to be redone entirely to support arbitrary levels of keys on BOTH the source and dest
-
-	for _, currentValue := range current {
-		for leftKey, _ := range current {
-			if _, ok := value[leftKey]; ok {
-				for valueKey, valueData := range value[leftKey].(map[string]interface{}) {
-					current[leftKey].(map[string]interface{})[valueKey] = valueData
-				}
-			}
-		}
-		if msiValue, ok := currentValue.(map[string]interface{}); ok {
-			deepMerge(msiValue, value)
-		}
-	}
+}
+func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 
 }

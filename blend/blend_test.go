@@ -14,67 +14,74 @@ var tests = []struct {
 	sources     []string
 	expected    string
 }{
-	// normal blending
+	// direct blending
 	{
-		name:        "Normal blending",
-		sources:     []string{`{"name":"Mat"}`},
+		name:        "Direct blending",
+		sources:     []string{`{"^":{"name":"Mat"}}`},
 		destination: `{"age":31}`,
 		expected:    `{"name":"Mat","age":31}`,
 	},
 	{
-		name:        "Shallow blending (default)",
-		sources:     []string{`{"grandpa":{"parent":{"another":"Tyler"}}}`},
+		name:        "Direct blending with nested data",
+		sources:     []string{`{"^":{"grandpa":{"parent":{"another":"Tyler"}}}}`},
 		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
 		expected:    `{"grandpa":{"parent":{"another":"Tyler"}}}`,
+	},
+	// shallow blending
+	{
+		name:        "Shallow blending",
+		sources:     []string{`{"<": {"contact": {"address2": "Unit 1D"}}}`},
+		destination: `{"contact": {"address1": "123 Fake Street"}}`,
+		expected:    `{"contact": {"address1": "123 Fake Street", "address2": "Unit 1D"}}`,
 	},
 	// deep blending
 	{
 		name:        "Deep blending",
-		sources:     []string{`{"grandpa":{"<":{"parent":{"another":"Tyler"}}}}`, `{"grandpa":{"<":{"parent":{"athird":"Ryan"}}}}`},
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"another":"Tyler"}}}}`, `{"<<":{"grandpa":{"parent":{"athird":"Ryan"}}}}`},
 		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
 		expected:    `{"grandpa":{"parent":{"child":"Mat","another":"Tyler","athird":"Ryan"}}}`,
 	},
 	{
 		name:        "Double Deep blending",
-		sources:     []string{`{"grandpa":{"<":{"parent":{"child":{"another":"Tyler"}}}}}`, `{"grandpa":{"<":{"parent":{"child":{"athird":"Ryan"}}}}}`},
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"child":{"another":"Tyler"}}}}}`, `{"<<":{"grandpa":{"parent":{"child":{"athird":"Ryan"}}}}}`},
 		destination: `{"grandpa":{"parent":{"child":{"first":"Mat"}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"first":"Mat","another":"Tyler","athird":"Ryan"}}}}`,
 	},
 	// + - adding to arrays
 	{
 		name:        "Create array",
-		sources:     []string{`{"name":{"+":"Mat"}}`},
+		sources:     []string{`{"+":{"name":"Mat"}}`},
 		destination: `{}`,
 		expected:    `{"name":["Mat"]}`,
 	},
 	{
 		name:        "Add to existing array",
-		sources:     []string{`{"name":{"+":"Tyler"}}`},
+		sources:     []string{`{"+":{"name":"Tyler"}}`},
 		destination: `{"name":["Mat"]}`,
 		expected:    `{"name":["Mat","Tyler"]}`,
 	},
 	{
 		name:        "Add to deep array",
-		sources:     []string{`{"grandpa":{"<":{"parent":{"child":{"names":{"+":"Tyler"}}}}}}`},
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"child":{"+":{"names":"Tyler"}}}}}}`},
 		destination: `{"grandpa":{"parent":{"child":{"names":["Mat"]}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"names":["Mat","Tyler"]}}}}`,
 	},
 	// +? - ensure in array
 	{
 		name:        "Add if not there to existing array",
-		sources:     []string{`{"name":{"+?":"Tyler"}}`, `{"name":{"+?":"Mat"}}`, `{"name":{"+?":"Tyler"}}`},
+		sources:     []string{`{"+?":{"name":"Tyler"}}`, `{"+?":{"name":"Mat"}}`, `{"+?":{"name":"Tyler"}}`},
 		destination: `{"name":["Mat"]}`,
 		expected:    `{"name":["Mat","Tyler"]}`,
 	},
 	{
 		name:        "Add if not there to new existing array",
-		sources:     []string{`{"name":{"+?":"Tyler"}}`, `{"name":{"+?":"Mat"}}`, `{"name":{"+?":"Tyler"}}`},
+		sources:     []string{`{"+?":{"name":"Tyler"}}`, `{"+?":{"name":"Mat"}}`, `{"+?":{"name":"Tyler"}}`},
 		destination: `{}`,
-		expected:    `{"name":["Mat","Tyler"]}`,
+		expected:    `{"name":["Tyler","Mat"]}`,
 	},
 	{
 		name:        "Add if not there to deep array",
-		sources:     []string{`{"grandpa":{"<":{"parent":{"child":{"names":{"+?":"Tyler"}}}}}}`, `{"grandpa":{"<":{"parent":{"child":{"names":{"+?":"Mat"}}}}}}`},
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"child":{"+?":{"names":"Tyler"}}}}}}`, `{"<<":{"grandpa":{"parent":{"child":{"+?":{"names":"Mat"}}}}}}`},
 		destination: `{"grandpa":{"parent":{"child":{"names":["Mat"]}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"names":["Mat","Tyler"]}}}}`,
 	},
