@@ -101,7 +101,7 @@ var tests = []struct {
 func TestAll(t *testing.T) {
 
 	for _, test := range tests {
-		t.Logf("Blending %s\n", test.name)
+		t.Logf("Blending - \"%s\"\n", test.name)
 
 		destination, err := JsonToMSI(test.destination)
 		if !assert.NoError(t, err, " - Destination - JsonToMSI") {

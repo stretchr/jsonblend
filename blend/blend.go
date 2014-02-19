@@ -23,7 +23,6 @@ var functionMap = map[string]blendFunc{
 	blendFunctionRemove:          BlendFuncRemove,
 	blendFunctionMergeDirect:     BlendFuncMergeDirect,
 	blendFunctionMergeShallow:    BlendFuncMergeShallow,
-	blendFunctionMergeDeep:       BlendFuncMergeDeep,
 }
 
 func keyIsFunction(key string) bool {
@@ -33,6 +32,8 @@ func keyIsFunction(key string) bool {
 // Blend blends the source into the destination using the
 // blending functions present in the maps.
 func Blend(source, dest map[string]interface{}) {
+
+	functionMap[blendFunctionMergeDeep] = BlendFuncMergeDeep
 
 	for key, value := range source {
 		if keyIsFunction(key) {
@@ -102,6 +103,10 @@ func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 }
 func recurseDeepMerge(source, dest, sourceParent, destParent map[string]interface{}) {
 	for sKey, sValue := range source {
+		if keyIsFunction(sKey) {
+			Blend(source, dest)
+			continue
+		}
 		if dValue, exists := dest[sKey]; exists {
 			if isMap(sValue) && isMap(dValue) {
 				// Both values are maps, we can recurse
