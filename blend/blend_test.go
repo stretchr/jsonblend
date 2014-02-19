@@ -1,8 +1,6 @@
 package blend
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -46,6 +44,12 @@ var tests = []struct {
 		sources:     []string{`{"<<":{"grandpa":{"parent":{"child":{"another":"Tyler"}}}}}`, `{"<<":{"grandpa":{"parent":{"child":{"athird":"Ryan"}}}}}`},
 		destination: `{"grandpa":{"parent":{"child":{"first":"Mat"}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"first":"Mat","another":"Tyler","athird":"Ryan"}}}}`,
+	},
+	{
+		name:        "Deep blending - multilevel",
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"sibling":{"first":"Tyler"}}}}}`, `{"<<":{"grandpa":{"parent":{"child":{"athird":"Ryan"}}}}}`},
+		destination: `{"grandpa":{"parent":{"child":{"first":"Mat"}}}}`,
+		expected:    `{"grandpa":{"parent":{"child":{"athird":"Ryan","first":"Mat"},"sibling":{"first":"Tyler"}}}}`,
 	},
 	// + - adding to arrays
 	{
@@ -94,40 +98,31 @@ var tests = []struct {
 	},
 }
 
-func jsonToMSI(jsonString string) (msi map[string]interface{}) {
-	if len(jsonString) == 0 {
-		jsonString = "{}"
-	}
-	err := json.Unmarshal([]byte(jsonString), &msi)
-	if err != nil {
-		panic(err)
-	}
-	return
-}
-func MSIToJson(msi map[string]interface{}) (jsonString string) {
-	jsonBytes, err := json.Marshal(msi)
-	if err != nil {
-		panic(err)
-	}
-	jsonString = string(jsonBytes)
-	return
-}
-
 func TestAll(t *testing.T) {
 
 	for _, test := range tests {
+		t.Logf("Blending %s\n", test.name)
 
-		destination := jsonToMSI(test.destination)
-		expected := jsonToMSI(test.expected)
-
-		current := destination
-		fmt.Printf("Blending %s\n", test.name)
-		for _, sourceStr := range test.sources {
-			source := jsonToMSI(sourceStr)
-			Blend(source, current)
+		destination, err := JsonToMSI(test.destination)
+		if !assert.NoError(t, err, " - Destination - JsonToMSI") {
+			continue
+		}
+		expected, err := JsonToMSI(test.expected)
+		if !assert.NoError(t, err, " - Expected - JsonToMSI") {
+			continue
 		}
 
-		assert.True(t, reflect.DeepEqual(current, expected), "%s failed - Actual: %#v is not equal to Expected: %#v", test.name, MSIToJson(current), MSIToJson(expected))
+		current := destination
+		for _, sourceStr := range test.sources {
+			source, err := JsonToMSI(sourceStr)
+			if !assert.NoError(t, err, " - SourceStr - JsonToMSI") {
+				continue
+			}
+			Blend(source, current)
+		}
+		currentString, _ := MSIToJson(current)
+		equalString, _ := MSIToJson(expected)
+		assert.True(t, reflect.DeepEqual(current, expected), "%s failed - Actual: %#v is not equal to Expected: %#v", test.name, currentString, equalString)
 
 	}
 
