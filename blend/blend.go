@@ -99,9 +99,6 @@ func BlendFuncMergeShallow(source, dest map[string]interface{}) {
 	}
 }
 func BlendFuncMergeDeep(source, dest map[string]interface{}) {
-	recurseDeepMerge(source, dest, nil, nil)
-}
-func recurseDeepMerge(source, dest, sourceParent, destParent map[string]interface{}) {
 	for sKey, sValue := range source {
 		if keyIsFunction(sKey) {
 			Blend(source, dest)
@@ -110,7 +107,7 @@ func recurseDeepMerge(source, dest, sourceParent, destParent map[string]interfac
 		if dValue, exists := dest[sKey]; exists {
 			if isMap(sValue) && isMap(dValue) {
 				// Both values are maps, we can recurse
-				recurseDeepMerge(sValue.(map[string]interface{}), dValue.(map[string]interface{}), source, dest)
+				BlendFuncMergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
 			} else {
 				// One of them is not a map, cannot proceed
 				// TODO: improve this to merge intelligently when keys have different values/types
