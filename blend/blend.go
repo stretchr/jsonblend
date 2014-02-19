@@ -113,7 +113,8 @@ func recurseDeepMerge(source, dest, sourceParent, destParent map[string]interfac
 				recurseDeepMerge(sValue.(map[string]interface{}), dValue.(map[string]interface{}), source, dest)
 			} else {
 				// One of them is not a map, cannot proceed
-				// TODO: improve this to merge intelligently when keys are different
+				// TODO: improve this to merge intelligently when keys have different values/types
+				// TODO: unknown when this will be the case. Needs tests. Will this ever happen?
 				panic(fmt.Sprintf("Cannot recurse. Both maps contain key but both are not maps: %#v,%#v\n", sValue, dValue))
 			}
 		} else {
