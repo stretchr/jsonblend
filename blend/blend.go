@@ -104,21 +104,46 @@ func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 			Blend(source, dest)
 			continue
 		}
-		if dValue, exists := dest[sKey]; exists {
-			if isMap(sValue) && isMap(dValue) {
-				// Both values are maps, we can recurse
-				BlendFuncMergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
+		var dValue interface{}
+		var exists bool
+		if dValue, exists = dest[sKey]; !exists {
+			if isMap(sValue) {
+				if mapContainsCommand(sValue.(map[string]interface{})) {
+					dest[sKey] = make(map[string]interface{})
+					dValue = dest[sKey]
+				} else {
+					dest[sKey] = sValue
+					continue
+				}
 			} else {
-				// One of them is not a map, cannot proceed
-				// TODO: improve this to merge intelligently when keys have different values/types
-				// TODO: unknown when this will be the case. Needs tests. Will this ever happen?
-				panic(fmt.Sprintf("Cannot recurse. Both maps contain key but both are not maps: %#v,%#v\n", sValue, dValue))
+				dest[sKey] = sValue
+				continue
 			}
+		}
+		if isMap(sValue) && isMap(dValue) {
+			// Both values are maps, we can recurse
+			BlendFuncMergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
 		} else {
-			// The destination map does not contain the key from the source map. Merge.
-			dest[sKey] = sValue
+			// One of them is not a map, cannot proceed
+			// TODO: improve this to merge intelligently when keys have different values/types
+			// TODO: unknown when this will be the case. Needs tests. Will this ever happen?
+			panic(fmt.Sprintf("Cannot recurse. Both maps contain key but values are not maps: %s - sv: %#v, dv:%#v\n", sKey, sValue, dValue))
+		}
+
+	}
+}
+func mapContainsCommand(source map[string]interface{}) bool {
+	retval := false
+	for k, v := range source {
+		if keyIsFunction(k) {
+			retval = true
+			break
+		}
+		if isMap(v) {
+			retval = mapContainsCommand(v.(map[string]interface{}))
 		}
 	}
+	return retval
 }
 
 // Utility functions

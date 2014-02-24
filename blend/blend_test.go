@@ -70,6 +70,12 @@ var tests = []struct {
 		destination: `{"grandpa":{"parent":{"child":{"names":["Mat"]}}}}`,
 		expected:    `{"grandpa":{"parent":{"child":{"names":["Mat","Tyler"]}}}}`,
 	},
+	{
+		name:        "Add to non-existent array, deep",
+		sources:     []string{`{"<<":{"grandpa":{"parent":{"child":{"+":{"names":"Tyler"}}}}}}`, `{"<<":{"grandpa":{"parent":{"child":{"+":{"names":"Mat"}}}}}}`},
+		destination: `{}`,
+		expected:    `{"grandpa":{"parent":{"child":{"names":["Tyler","Mat"]}}}}`,
+	},
 	// +? - ensure in array
 	{
 		name:        "Add if not there to existing array",
