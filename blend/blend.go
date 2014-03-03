@@ -120,6 +120,13 @@ func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 				continue
 			}
 		}
+		if isMap(sValue) && dValue == nil {
+			dest[sKey] = make(map[string]interface{})
+			dValue = dest[sKey]
+		}
+		if sValue == nil {
+			continue
+		}
 		if isMap(sValue) && isMap(dValue) {
 			// Both values are maps, we can recurse
 			BlendFuncMergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
