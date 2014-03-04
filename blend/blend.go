@@ -30,19 +30,14 @@ func keyIsFunction(key string) bool {
 	return functionMap[key] != nil
 }
 
-// Blend blends the source string into the destination string using the
+// Blend blends the source string into the destination map using the
 // blending functions present in the maps.
-func BlendJSON(source, dest string) error {
+func BlendJSON(source string, dest map[string]interface{}) error {
 	sourceMap, err := JsonToMSI(source)
 	if err != nil {
 		return err
 	}
-	destMap, err := JsonToMSI(dest)
-	if err != nil {
-		return err
-	}
-
-	return Blend(sourceMap, destMap)
+	return Blend(sourceMap, dest)
 }
 
 // Blend blends the source into the destination using the
