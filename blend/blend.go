@@ -2,6 +2,7 @@ package blend
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -15,7 +16,7 @@ const (
 	blendFunctionMergeDeep       = "<<"
 )
 
-type blendFunc func(source, dest map[string]interface{})
+type blendFunc func(source, dest map[string]interface{}) error
 
 var functionMap = map[string]blendFunc{
 	blendFunctionAdd:             BlendFuncAdd,
@@ -29,28 +30,48 @@ func keyIsFunction(key string) bool {
 	return functionMap[key] != nil
 }
 
+// Blend blends the source string into the destination string using the
+// blending functions present in the maps.
+func BlendJSON(source, dest string) error {
+	sourceMap, err := JsonToMSI(source)
+	if err != nil {
+		return err
+	}
+	destMap, err := JsonToMSI(dest)
+	if err != nil {
+		return err
+	}
+
+	return Blend(sourceMap, destMap)
+}
+
 // Blend blends the source into the destination using the
 // blending functions present in the maps.
-func Blend(source, dest map[string]interface{}) {
+func Blend(source, dest map[string]interface{}) error {
 
 	functionMap[blendFunctionMergeDeep] = BlendFuncMergeDeep
 
 	for key, value := range source {
 		if keyIsFunction(key) {
-			functionMap[key](value.(map[string]interface{}), dest)
+			err := functionMap[key](value.(map[string]interface{}), dest)
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
-func BlendFuncAdd(source, dest map[string]interface{}) {
+func BlendFuncAdd(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			dest[key] = make([]interface{}, 0)
 		}
 		dest[key] = append(dest[key].([]interface{}), value)
 	}
+	return nil
 }
-func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) {
+func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			dest[key] = make([]interface{}, 0)
@@ -66,11 +87,12 @@ func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) {
 			dest[key] = append(dest[key].([]interface{}), value)
 		}
 	}
+	return nil
 }
-func BlendFuncRemove(source, dest map[string]interface{}) {
+func BlendFuncRemove(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
-			return
+			return nil
 		}
 		location := -1
 		for index, item := range dest[key].([]interface{}) {
@@ -83,13 +105,15 @@ func BlendFuncRemove(source, dest map[string]interface{}) {
 			dest[key] = append(dest[key].([]interface{})[:location], dest[key].([]interface{})[location+1:]...)
 		}
 	}
+	return nil
 }
-func BlendFuncMergeDirect(source, dest map[string]interface{}) {
+func BlendFuncMergeDirect(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		dest[key] = value
 	}
+	return nil
 }
-func BlendFuncMergeShallow(source, dest map[string]interface{}) {
+func BlendFuncMergeShallow(source, dest map[string]interface{}) error {
 	for key, _ := range dest {
 		if _, exists := source[key]; exists {
 			for sourceKey, sourceValue := range source[key].(map[string]interface{}) {
@@ -97,8 +121,9 @@ func BlendFuncMergeShallow(source, dest map[string]interface{}) {
 			}
 		}
 	}
+	return nil
 }
-func BlendFuncMergeDeep(source, dest map[string]interface{}) {
+func BlendFuncMergeDeep(source, dest map[string]interface{}) error {
 	for sKey, sValue := range source {
 		if keyIsFunction(sKey) {
 			Blend(source, dest)
@@ -134,10 +159,11 @@ func BlendFuncMergeDeep(source, dest map[string]interface{}) {
 			// One of them is not a map, cannot proceed
 			// TODO: improve this to merge intelligently when keys have different values/types
 			// TODO: unknown when this will be the case. Needs tests. Will this ever happen?
-			panic(fmt.Sprintf("Cannot recurse. Both maps contain key but values are not maps: %s - sv: %#v, dv:%#v\n", sKey, sValue, dValue))
+			return errors.New(fmt.Sprintf("Cannot recurse. Both maps contain key \"%s\" but values are not both maps. Both values must be maps in order to merge", sKey))
 		}
 
 	}
+	return nil
 }
 func mapContainsCommand(source map[string]interface{}) bool {
 	retval := false
