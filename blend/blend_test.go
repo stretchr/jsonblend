@@ -103,7 +103,12 @@ var tests = []struct {
 		expected:    `{"name": [{"item":"one"},{"item":"three"}]}`,
 	},
 	// Special Cases
-	// No destination map
+	{
+		name:        "No destination map - Direct",
+		sources:     []string{`{"^": {"name": {"item":"one"}}}`, `{"^": {"name": {"item":"two"}}}`},
+		destination: `{}`,
+		expected:    `{"name": {"item":"two"}}`,
+	},
 	{
 		name:        "No destination map - Shallow",
 		sources:     []string{`{"<": {"name": {"item1":"one"}}}`, `{"<": {"name": {"item2":"two"}}}`},
