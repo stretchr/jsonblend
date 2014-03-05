@@ -109,11 +109,13 @@ func BlendFuncMergeDirect(source, dest map[string]interface{}) error {
 	return nil
 }
 func BlendFuncMergeShallow(source, dest map[string]interface{}) error {
-	for key, _ := range dest {
-		if _, exists := source[key]; exists {
+	for key, _ := range source {
+		if _, exists := dest[key]; exists {
 			for sourceKey, sourceValue := range source[key].(map[string]interface{}) {
 				dest[key].(map[string]interface{})[sourceKey] = sourceValue
 			}
+		} else {
+			dest[key] = source[key]
 		}
 	}
 	return nil

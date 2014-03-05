@@ -102,6 +102,14 @@ var tests = []struct {
 		destination: `{}`,
 		expected:    `{"name": [{"item":"one"},{"item":"three"}]}`,
 	},
+	// Special Cases
+	// No destination map
+	{
+		name:        "No destination map - Shallow",
+		sources:     []string{`{"<": {"name": {"item1":"one"}}}`, `{"<": {"name": {"item2":"two"}}}`},
+		destination: `{}`,
+		expected:    `{"name": {"item1":"one","item2":"two"}}`,
+	},
 }
 
 func TestAll(t *testing.T) {
