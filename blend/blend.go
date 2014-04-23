@@ -26,8 +26,11 @@ var functionMap = map[string]blendFunc{
 	blendFunctionMergeShallow:    BlendFuncMergeShallow,
 }
 
+// defaultBlendFunc is the default behaviour when non-keys are encountered.
 var defaultBlendFunc blendFunc = BlendFuncMergeDirect
 
+// keyIsFunction gets whether the specified key is a special
+// JSON blend function or not.
 func keyIsFunction(key string) bool {
 	return functionMap[key] != nil
 }
