@@ -12,6 +12,19 @@ var tests = []struct {
 	sources     []string
 	expected    string
 }{
+	// direct blending by default
+	{
+		name:        "Direct blending",
+		sources:     []string{`{"name":"Mat"}`},
+		destination: `{"age":31}`,
+		expected:    `{"name":"Mat","age":31}`,
+	},
+	{
+		name:        "Direct blending with nested data",
+		sources:     []string{`{"grandpa":{"parent":{"another":"Tyler"}}}`},
+		destination: `{"grandpa":{"parent":{"child":"Mat"}}}`,
+		expected:    `{"grandpa":{"parent":{"another":"Tyler"}}}`,
+	},
 	// direct blending
 	{
 		name:        "Direct blending",
@@ -120,7 +133,6 @@ var tests = []struct {
 func TestAll(t *testing.T) {
 
 	for _, test := range tests {
-		t.Logf("Blending - \"%s\"\n", test.name)
 
 		destination, err := JsonToMSI(test.destination)
 		if !assert.NoError(t, err, " - Destination - JsonToMSI") {
