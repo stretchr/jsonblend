@@ -19,15 +19,15 @@ const (
 type blendFunc func(source, dest map[string]interface{}) error
 
 var functionMap = map[string]blendFunc{
-	blendFunctionAdd:             BlendFuncAdd,
-	blendFunctionAddIfNotPresent: BlendFuncAddIfNotPresent,
-	blendFunctionRemove:          BlendFuncRemove,
-	blendFunctionMergeDirect:     BlendFuncMergeDirect,
-	blendFunctionMergeShallow:    BlendFuncMergeShallow,
+	blendFunctionAdd:             Add,
+	blendFunctionAddIfNotPresent: AddIfNotPresent,
+	blendFunctionRemove:          Remove,
+	blendFunctionMergeDirect:     MergeDirect,
+	blendFunctionMergeShallow:    MergeShallow,
 }
 
 // defaultBlendFunc is the default behaviour when non-keys are encountered.
-var defaultBlendFunc blendFunc = BlendFuncMergeDirect
+var defaultBlendFunc blendFunc = MergeDirect
 
 // keyIsFunction gets whether the specified key is a special
 // JSON blend function or not.
@@ -50,7 +50,7 @@ func BlendJSON(source string, dest map[string]interface{}) error {
 func Blend(source, dest map[string]interface{}) error {
 
 	if _, ok := functionMap[blendFunctionMergeDeep]; !ok {
-		functionMap[blendFunctionMergeDeep] = BlendFuncMergeDeep
+		functionMap[blendFunctionMergeDeep] = MergeDeep
 	}
 
 	for key, value := range source {
@@ -68,7 +68,7 @@ func Blend(source, dest map[string]interface{}) error {
 	return nil
 }
 
-func BlendFuncAdd(source, dest map[string]interface{}) error {
+func Add(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			dest[key] = make([]interface{}, 0)
@@ -77,7 +77,7 @@ func BlendFuncAdd(source, dest map[string]interface{}) error {
 	}
 	return nil
 }
-func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) error {
+func AddIfNotPresent(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			dest[key] = make([]interface{}, 0)
@@ -95,7 +95,7 @@ func BlendFuncAddIfNotPresent(source, dest map[string]interface{}) error {
 	}
 	return nil
 }
-func BlendFuncRemove(source, dest map[string]interface{}) error {
+func Remove(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		if _, exists := dest[key]; !exists {
 			return nil
@@ -113,13 +113,13 @@ func BlendFuncRemove(source, dest map[string]interface{}) error {
 	}
 	return nil
 }
-func BlendFuncMergeDirect(source, dest map[string]interface{}) error {
+func MergeDirect(source, dest map[string]interface{}) error {
 	for key, value := range source {
 		dest[key] = value
 	}
 	return nil
 }
-func BlendFuncMergeShallow(source, dest map[string]interface{}) error {
+func MergeShallow(source, dest map[string]interface{}) error {
 	for key, _ := range source {
 		if _, exists := dest[key]; exists {
 			for sourceKey, sourceValue := range source[key].(map[string]interface{}) {
@@ -131,7 +131,7 @@ func BlendFuncMergeShallow(source, dest map[string]interface{}) error {
 	}
 	return nil
 }
-func BlendFuncMergeDeep(source, dest map[string]interface{}) error {
+func MergeDeep(source, dest map[string]interface{}) error {
 	for sKey, sValue := range source {
 		if keyIsFunction(sKey) {
 			Blend(source, dest)
@@ -162,7 +162,7 @@ func BlendFuncMergeDeep(source, dest map[string]interface{}) error {
 		}
 		if isMap(sValue) && isMap(dValue) {
 			// Both values are maps, we can recurse
-			BlendFuncMergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
+			MergeDeep(sValue.(map[string]interface{}), dValue.(map[string]interface{}))
 		} else {
 			// One of them is not a map, cannot proceed
 			// TODO: improve this to merge intelligently when keys have different values/types
